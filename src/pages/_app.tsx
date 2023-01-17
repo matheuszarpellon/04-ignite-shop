@@ -8,8 +8,8 @@ globalStyles()
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <>
-      <Header />
       <Container>
+        <Header />
         <Component {...pageProps} />
       </Container>
     </>
