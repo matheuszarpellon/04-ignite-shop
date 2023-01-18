@@ -1,3 +1,6 @@
+import { CartButton } from "@/components/CartButton"
+import { IProduct } from "@/contexts/CartContext"
+import { useCart } from "@/hooks/useCart"
 import { stripe } from "@/lib/stripe"
 import { HomeContainer, Product } from "@/styles/pages/home"
 import 'keen-slider/keen-slider.min.css'
@@ -6,15 +9,11 @@ import { GetStaticProps } from "next"
 import Head from "next/head"
 import Image from "next/image"
 import Link from "next/link"
+import { MouseEvent } from "react"
 import Stripe from 'stripe'
 
 interface HomeProps {
-  products: {
-    id: string
-    name: string
-    imageUrl: string
-    price: string
-  }[]
+  products: IProduct[]
 }
 
 export default function Home({ products }: HomeProps) {
@@ -24,6 +23,25 @@ export default function Home({ products }: HomeProps) {
       spacing: 48
     }
   })
+
+  const { addToCart, removeCartItem, checkIfItemAlreadyExists } = useCart();
+
+  function handleAddToCart(
+    e: MouseEvent<HTMLButtonElement>,
+    product: IProduct
+  ) {
+    e.preventDefault();
+    addToCart(product);
+  }
+
+  function handleRemoveFromCart(
+    e: MouseEvent<HTMLButtonElement>,
+    product: IProduct
+  ) {
+    e.preventDefault();
+    removeCartItem(product.id);
+  }
+
   return (
     <>
       <Head>
@@ -37,8 +55,25 @@ export default function Home({ products }: HomeProps) {
                 <Image src={product.imageUrl} width={520} height={480} alt="" />
 
                 <footer>
-                  <strong>{product.name}</strong>
-                  <span>{product.price}</span>
+                  <div>
+                    <strong>{product.name}</strong>
+                    <span>{product.price}</span>
+                  </div>
+                  {checkIfItemAlreadyExists(product.id) === true ? (
+                    <CartButton
+                    size="large"
+                    color="red"
+                    variant="remove"
+                    onClick={(e) => handleRemoveFromCart(e, product)}
+                  />
+                  ) : (
+                    <CartButton
+                    size="large"
+                    color="green"
+                    onClick={(e) => handleAddToCart(e, product)}
+                  />
+                  )}
+                  
                 </footer>
               </Product>
             </Link>
@@ -66,6 +101,8 @@ export const getStaticProps: GetStaticProps = async () => {
         style: 'currency',
         currency: 'BRL'
       }).format(Number(price.unit_amount) / 100),
+      numberPrice: Number(price.unit_amount) / 100,
+      defaultPriceId: price.id,
     }
   })
 
